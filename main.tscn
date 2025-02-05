@@ -10,11 +10,10 @@ sky_material = SubResource("ProceduralSkyMaterial_v4d2o")
 
 [sub_resource type="Environment" id="Environment_3prqi"]
 background_mode = 3
-background_color = Color(0.748495, 0.832669, 1, 1)
 sky = SubResource("Sky_3uant")
 sky_custom_fov = 37.9
-ambient_light_source = 2
-ambient_light_color = Color(0.522277, 0.677125, 1, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.999026, 0.837164, 0.884479, 1)
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_q7a3j"]
 

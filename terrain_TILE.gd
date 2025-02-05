@@ -2,10 +2,10 @@ extends Node
 
 const MAP_SIZE = 128  # Размер сетки (количество полигонов)
 const TILE_SIZE = 2  # Размер одного квадрата (чем больше, тем менее детализирован рельеф)
-const HEIGHT_MULTIPLIER = 20.0  # Максимальная высота гор
-const MIN_HEIGHT = 6.0  # Минимальная высота рельефа
-const MAX_HEIGHT = 17.0  # Максимальная высота рельефа
-const WATER_LEVEL = 7.0  # Уровень воды
+const HEIGHT_MULTIPLIER = 25.0  # Максимальная высота гор
+const MIN_HEIGHT = 5.0  # Минимальная высота рельефа
+const MAX_HEIGHT = 25.0  # Максимальная высота рельефа
+const WATER_LEVEL = 8.0  # Уровень воды
 
 var noise = FastNoiseLite.new()  # Генератор шума
 var island_noise = FastNoiseLite.new()  # Шум для островков
@@ -19,16 +19,16 @@ func _ready():
 	
 	# Настройки шума рельефа
 	noise.noise_type = FastNoiseLite.TYPE_PERLIN
-	noise.frequency = 0.005
-	noise.fractal_octaves = 4
-	noise.fractal_lacunarity = 2
+	noise.frequency = 0.01
+	noise.fractal_octaves = 1.3
+	noise.fractal_lacunarity = 3
 	noise.fractal_gain = 2
 	noise.seed = randi()
 	
 	# Настройки шума для островков
 	island_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
-	island_noise.frequency = 0.01
-	island_noise.fractal_octaves = 5
+	island_noise.frequency = 0.001
+	island_noise.fractal_octaves = 1
 	island_noise.seed = noise.seed + 100
 	
 	generate_terrain()
@@ -90,7 +90,7 @@ func generate_terrain():
 	terrain_mesh.mesh = mesh
 	
 	var mat = StandardMaterial3D.new()
-	mat.albedo_color = Color(0.15, 0.35, 0.1)  
+	mat.albedo_color = Color(0.5, 0.4, 0.2)  
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	terrain_mesh.material_override = mat
 	
@@ -143,19 +143,24 @@ func generate_water():
 	
 	water_mesh = MeshInstance3D.new()
 	water_mesh.mesh = mesh
-	var mat = StandardMaterial3D.new()
-	mat.albedo_color = Color(0.0, 0.3, 0.5, 0.5)  # Цвет воды
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	water_mesh.material_override = mat
+	var material = StandardMaterial3D.new()
+	material.albedo_color = Color(0.1, 0.3, 0.1, 0.6)  # Темно-зеленая болотная вода
+	material.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED  # Включаем рендеринг с двух сторон
+
+	water_mesh = MeshInstance3D.new()
+	water_mesh.mesh = mesh
+	water_mesh.material_override = material  # Применяем материал
 
 	add_child(water_mesh)
+
 
 func position_player():
 	player.position.y += 5.0  # Поднимаем игрока немного, чтобы избежать залипания
 
 func add_sunlight():
 	var light = DirectionalLight3D.new()
-	light.light_energy = 0.9  # Интенсивность света
+	light.light_energy = 0.7  # Интенсивность света
 	light.rotation_degrees = Vector3(-45, -45, 0)  # Угол падения света
 	light.shadow_enabled = true  # Включить тени
 	add_child(light)
