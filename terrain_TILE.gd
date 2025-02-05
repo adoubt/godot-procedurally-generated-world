@@ -1,27 +1,40 @@
 extends Node
 
 const MAP_SIZE = 128  # Размер сетки (количество полигонов)
-const TILE_SIZE = 2.0  # Размер одного квадрата (чем больше, тем менее детализирован рельеф)
+const TILE_SIZE = 2  # Размер одного квадрата (чем больше, тем менее детализирован рельеф)
 const HEIGHT_MULTIPLIER = 20.0  # Максимальная высота гор
+const MIN_HEIGHT = 6.0  # Минимальная высота рельефа
+const MAX_HEIGHT = 17.0  # Максимальная высота рельефа
+const WATER_LEVEL = 7.0  # Уровень воды
 
 var noise = FastNoiseLite.new()  # Генератор шума
+var island_noise = FastNoiseLite.new()  # Шум для островков
 var player: Node3D  # Ссылка на игрока
 var terrain_mesh: MeshInstance3D  # Меш рельефа
 var collision: StaticBody3D  # Коллизия земли
+var water_mesh: MeshInstance3D  # Водная поверхность
 
 func _ready():
 	player = get_node("../Player")  # Получаем ссылку на игрока
-
-	# Настройки шума
+	
+	# Настройки шума рельефа
 	noise.noise_type = FastNoiseLite.TYPE_PERLIN
 	noise.frequency = 0.005
-	noise.fractal_octaves = 5
-	noise.fractal_lacunarity = 2.0
-	noise.fractal_gain = 0.5
+	noise.fractal_octaves = 4
+	noise.fractal_lacunarity = 2
+	noise.fractal_gain = 2
+	noise.seed = randi()
+	
+	# Настройки шума для островков
+	island_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	island_noise.frequency = 0.01
+	island_noise.fractal_octaves = 5
+	island_noise.seed = noise.seed + 100
 	
 	generate_terrain()
+	generate_water()
 	position_player()
-
+	add_sunlight()
 func generate_terrain():
 	var st = SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -34,23 +47,40 @@ func generate_terrain():
 			var world_x = x * TILE_SIZE
 			var world_z = z * TILE_SIZE
 			var height = noise.get_noise_2d(world_x, world_z) * HEIGHT_MULTIPLIER
+			var island_factor = island_noise.get_noise_2d(world_x, world_z)  # Добавляем островки
 
+			# Островки немного поднимаются над водой
+			#if height < WATER_LEVEL and island_factor > 0.2:
+				#height = WATER_LEVEL + 2.0
+			
+			# Ограничиваем высоту
+			height = clamp(height, MIN_HEIGHT, MAX_HEIGHT)
+			
 			if height > highest_point:
 				highest_point = height
-				spawn_position = Vector3(world_x, height + 2.0, world_z)  # +2, чтобы игрок не застревал
+				spawn_position = Vector3(world_x, height + 2.0, world_z)
 			
 			var v1 = Vector3(world_x, height, world_z)
-			var v2 = Vector3(world_x + TILE_SIZE, noise.get_noise_2d(world_x + TILE_SIZE, world_z) * HEIGHT_MULTIPLIER, world_z)
-			var v3 = Vector3(world_x, noise.get_noise_2d(world_x, world_z + TILE_SIZE) * HEIGHT_MULTIPLIER, world_z + TILE_SIZE)
-			var v4 = Vector3(world_x + TILE_SIZE, noise.get_noise_2d(world_x + TILE_SIZE, world_z + TILE_SIZE) * HEIGHT_MULTIPLIER, world_z + TILE_SIZE)
+			var v2 = Vector3(world_x + TILE_SIZE, clamp(noise.get_noise_2d(world_x + TILE_SIZE, world_z) * HEIGHT_MULTIPLIER, MIN_HEIGHT, MAX_HEIGHT), world_z)
+			var v3 = Vector3(world_x, clamp(noise.get_noise_2d(world_x, world_z + TILE_SIZE) * HEIGHT_MULTIPLIER, MIN_HEIGHT, MAX_HEIGHT), world_z + TILE_SIZE)
+			var v4 = Vector3(world_x + TILE_SIZE, clamp(noise.get_noise_2d(world_x + TILE_SIZE, world_z + TILE_SIZE) * HEIGHT_MULTIPLIER, MIN_HEIGHT, MAX_HEIGHT), world_z + TILE_SIZE)
 
+			var color = get_color_for_height(height)
+			
+			st.set_color(color)
 			st.add_vertex(v1)
+			st.set_color(color)
 			st.add_vertex(v2)
+			st.set_color(color)
 			st.add_vertex(v3)
 
+			st.set_color(color)
 			st.add_vertex(v2)
+			st.set_color(color)
 			st.add_vertex(v4)
+			st.set_color(color)
 			st.add_vertex(v3)
+	
 
 	st.generate_normals()
 	var mesh = st.commit()
@@ -58,6 +88,12 @@ func generate_terrain():
 	# Создаем и добавляем меш
 	terrain_mesh = MeshInstance3D.new()
 	terrain_mesh.mesh = mesh
+	
+	var mat = StandardMaterial3D.new()
+	mat.albedo_color = Color(0.15, 0.35, 0.1)  
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	terrain_mesh.material_override = mat
+	
 	add_child(terrain_mesh)
 
 	# Создаем и добавляем коллизию
@@ -69,5 +105,57 @@ func generate_terrain():
 
 	player.position = spawn_position  # Устанавливаем игрока на самый высокий участок
 
+func get_color_for_height(height: float) -> Color:
+	if height < WATER_LEVEL + 1.0:
+		return Color(0.2, 0.4, 0.1)  # Грязно-зеленый для болот
+	elif height < WATER_LEVEL + 5.0:
+		return Color(0.3, 0.5, 0.2)  # Трава
+	elif height < MAX_HEIGHT * 0.5:
+		return Color(0.5, 0.4, 0.2)  # Земля
+	else:
+		return Color(0.7, 0.7, 0.7)  # Камни
+
+func generate_water():
+	var st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	
+	for x in range(MAP_SIZE):
+		for z in range(MAP_SIZE):
+			var world_x = x * TILE_SIZE
+			var world_z = z * TILE_SIZE
+			
+			var v1 = Vector3(world_x, WATER_LEVEL, world_z)
+			var v2 = Vector3(world_x + TILE_SIZE, WATER_LEVEL, world_z)
+			var v3 = Vector3(world_x, WATER_LEVEL, world_z + TILE_SIZE)
+			var v4 = Vector3(world_x + TILE_SIZE, WATER_LEVEL, world_z + TILE_SIZE)
+
+			
+			st.add_vertex(v1)
+			st.add_vertex(v2)
+			st.add_vertex(v3)
+
+			st.add_vertex(v2)
+			st.add_vertex(v4)
+			st.add_vertex(v3)
+	
+	st.generate_normals()
+	var mesh = st.commit()
+	
+	water_mesh = MeshInstance3D.new()
+	water_mesh.mesh = mesh
+	var mat = StandardMaterial3D.new()
+	mat.albedo_color = Color(0.0, 0.3, 0.5, 0.5)  # Цвет воды
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	water_mesh.material_override = mat
+
+	add_child(water_mesh)
+
 func position_player():
 	player.position.y += 5.0  # Поднимаем игрока немного, чтобы избежать залипания
+
+func add_sunlight():
+	var light = DirectionalLight3D.new()
+	light.light_energy = 0.9  # Интенсивность света
+	light.rotation_degrees = Vector3(-45, -45, 0)  # Угол падения света
+	light.shadow_enabled = true  # Включить тени
+	add_child(light)
