@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://be4nwyjqgij76"]
+
+[ext_resource type="Script" path="res://terrain.gd" id="1_2oijq"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_as84a"]
+
+[node name="Node3D" type="Node3D"]
+
+[node name="Terrain" type="MeshInstance3D" parent="."]
+mesh = SubResource("PlaneMesh_as84a")
+script = ExtResource("1_2oijq")
+terrain_size = null
+water_level = null
+
+[node name="Camera3D" type="Camera3D" parent="."]
