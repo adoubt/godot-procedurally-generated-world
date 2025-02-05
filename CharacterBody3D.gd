@@ -3,13 +3,13 @@ extends CharacterBody3D
 
 # Базовые параметры передвижения
 @export var mouse_sensitivity: float = 0.2  # Чувствительность мыши
-@export var base_speed: float = 5.0  # Базовая скорость передвижения
+@export var base_speed: float = 7.0  # Базовая скорость передвижения
 @export var stealth_speed: float = 2.0  # Скорость в режиме скрытности
-@export var sprint_speed: float = 8.0  # Скорость при беге
-@export var jump_velocity: float = 5.0  # Высота прыжка
+@export var sprint_speed: float = 15.0  # Скорость при беге
+@export var jump_velocity: float = 15.0  # Высота прыжка
 @export var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")  # Гравитация
-@export var acceleration: float = 10.0  # Насколько быстро ускоряется персонаж
-@export var deceleration: float = 10.0  # Насколько быстро замедляется персонаж
+@export var acceleration: float = 100.0  # Насколько быстро ускоряется персонаж
+@export var deceleration: float = 100.0  # Насколько быстро замедляется персонаж
 
 var current_speed: float  # Текущая скорость передвижения
 var is_sprinting: bool = false

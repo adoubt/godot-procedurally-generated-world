@@ -2,15 +2,27 @@ extends Node
 
 # Константы для генерации мира
 const GENERATION_BOUND_DISTANCE = 64  # Радиус генерации кубов вокруг игрока
-const VERTICAL_AMPLITUDE = 10  # Максимальная высота колебаний кубов (влияет на рельеф)
+const VERTICAL_AMPLITUDE = 100  # Максимальная высота колебаний кубов (влияет на рельеф)
+
 
 var noise = FastNoiseLite.new()  # Генератор шума для высоты ландшафта
 var player: Node  # Ссылка на игрока
 var generated_cubes  # Словарь для хранения сгенерированных кубов
 
+
+
+
 func _ready():
 	generated_cubes = {}  # Инициализация словаря сгенерированных кубов
 	player = get_node("../Player")  # Получаем ссылку на объект игрока
+	
+	noise = FastNoiseLite.new()
+	noise.noise_type = FastNoiseLite.TYPE_PERLIN  # Используем перлин-шум
+	noise.frequency = 0.005  # Делает рельеф более масштабным
+	noise.fractal_octaves = 5  # Добавляем больше деталей
+	noise.fractal_lacunarity = 2.0  # Контрастность больших и мелких форм
+	noise.fractal_gain = 0.5  # Влияние каждой следующей октавы
+
 	generate_new_cubes_from_position(player.position)  # Генерируем кубы в начальной позиции игрока
 
 # Функция генерации новых кубов вокруг позиции игрока
