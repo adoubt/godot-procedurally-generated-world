@@ -1,31 +1,83 @@
+
 extends CharacterBody3D
 
+# Базовые параметры передвижения
+@export var mouse_sensitivity: float = 0.2  # Чувствительность мыши
+@export var base_speed: float = 5.0  # Базовая скорость передвижения
+@export var stealth_speed: float = 2.0  # Скорость в режиме скрытности
+@export var sprint_speed: float = 8.0  # Скорость при беге
+@export var jump_velocity: float = 5.0  # Высота прыжка
+@export var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")  # Гравитация
+@export var acceleration: float = 10.0  # Насколько быстро ускоряется персонаж
+@export var deceleration: float = 10.0  # Насколько быстро замедляется персонаж
 
-const SPEED = 5.0
-const JUMP_VELOCITY = 4.5
+var current_speed: float  # Текущая скорость передвижения
+var is_sprinting: bool = false
+var is_stealth: bool = false
 
-# Get the gravity from the project settings to be synced with RigidBody nodes.
-var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
+var camera_pivot  # Узел CameraPivot
+var camera  # Узел Camera3D
+var rotation_x = 0.0  # Угол наклона камеры вверх-вниз
 
+func _ready():
+	current_speed = base_speed  # По умолчанию стандартная скорость
+	camera_pivot = $CameraPivot  # Получаем узел CameraPivot
+	camera = $CameraPivot/Camera3D  # Получаем узел Camera3D
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)  # Скрываем и блокируем курсор
 
+func _input(event):
+	# Управление мышью
+	if event is InputEventMouseMotion:
+		rotation_x -= event.relative.y * mouse_sensitivity
+		rotation_x = clamp(rotation_x, -75, 75)  # Ограничиваем наклон камеры
+		camera_pivot.rotation_degrees.x = rotation_x
+
+		rotation_degrees.y -= event.relative.x * mouse_sensitivity  # Поворот персонажа
+	if event is InputEventKey and event.keycode == KEY_ESCAPE:
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)		
 func _physics_process(delta):
-	# Add the gravity.
+	_apply_gravity(delta)
+	_handle_movement(delta)
+	move_and_slide()
+
+func _apply_gravity(delta):
+	# Применяем гравитацию, если не стоим на земле
 	if not is_on_floor():
 		velocity.y -= gravity * delta
 
-	# Handle jump.
-	if Input.is_action_just_pressed("ui_accept") and is_on_floor():
-		velocity.y = JUMP_VELOCITY
-
-	# Get the input direction and handle the movement/deceleration.
-	# As good practice, you should replace UI actions with custom gameplay actions.
+func _handle_movement(delta):
+	# Получаем входные данные (направление движения)
 	var input_dir = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 	var direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
-	if direction:
-		velocity.x = direction.x * SPEED
-		velocity.z = direction.z * SPEED
-	else:
-		velocity.x = move_toward(velocity.x, 0, SPEED)
-		velocity.z = move_toward(velocity.z, 0, SPEED)
 
-	move_and_slide()
+	# Проверяем нажатие кнопок и изменяем скорость
+	if Input.is_action_pressed("sprint") and is_on_floor():  # Ctrl - ускорение
+		is_sprinting = true
+		is_stealth = false
+	elif Input.is_action_pressed("stealth") and is_on_floor():  # Shift - скрытность
+		is_stealth = true
+		is_sprinting = false
+	else:
+		is_sprinting = false
+		is_stealth = false
+
+	# Устанавливаем скорость в зависимости от режима
+	if is_sprinting:
+		current_speed = sprint_speed
+	elif is_stealth:
+		current_speed = stealth_speed
+	else:
+		current_speed = base_speed
+
+	# Применяем ускорение / замедление для плавного движения
+	if direction:
+		velocity.x = move_toward(velocity.x, direction.x * current_speed, acceleration * delta)
+		velocity.z = move_toward(velocity.z, direction.z * current_speed, acceleration * delta)
+	else:
+		velocity.x = move_toward(velocity.x, 0, deceleration * delta)
+		velocity.z = move_toward(velocity.z, 0, deceleration * delta)
+	
+	# Прыжок на пробел
+	if Input.is_action_just_pressed("jump") and is_on_floor():
+		velocity.y = jump_velocity
+	
