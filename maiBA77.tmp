@@ -52,4 +52,3 @@ shadow_enabled = true
 [node name="Node3D" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0635476, -0.165628, -0.0703402)
 script = ExtResource("3_5tj88")
-player_path = NodePath("../Player")

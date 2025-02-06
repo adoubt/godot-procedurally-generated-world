@@ -1,4 +1,3 @@
-
 extends CharacterBody3D
 
 # Базовые параметры передвижения
@@ -7,9 +6,13 @@ extends CharacterBody3D
 @export var stealth_speed: float = 2.0  # Скорость в режиме скрытности
 @export var sprint_speed: float = 15.0  # Скорость при беге
 @export var jump_velocity: float = 15.0  # Высота прыжка
-@export var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")  # Гравитация
+@export var gravity: float = 0.5 #ProjectSettings.get_setting("physics/3d/default_gravity")  # Гравитация
 @export var acceleration: float = 100.0  # Насколько быстро ускоряется персонаж
 @export var deceleration: float = 100.0  # Насколько быстро замедляется персонаж
+@export var blink_distance: float = 5.0  # Расстояние рывка
+@export var blink_duration: float = 0.1  # Длительность рывка
+
+var blink_timer: float = -1.0  # Таймер для рывка, начинается с -1, чтобы рывок не был активирован сразу
 
 var current_speed: float  # Текущая скорость передвижения
 var is_sprinting: bool = false
@@ -35,6 +38,10 @@ func _input(event):
 		rotation_degrees.y -= event.relative.x * mouse_sensitivity  # Поворот персонажа
 	if event is InputEventKey and event.keycode == KEY_ESCAPE:
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)		
+	# Включаем блинк при нажатии клавиши
+	if Input.is_action_just_pressed("1item") and blink_timer < 0.0:
+		perform_blink()
+
 func _physics_process(delta):
 	_apply_gravity(delta)
 	_handle_movement(delta)
@@ -80,4 +87,26 @@ func _handle_movement(delta):
 	# Прыжок на пробел
 	if Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = jump_velocity
-	
+
+# Функция для быстрого блинка
+func perform_blink():
+	# Устанавливаем начальное время рывка
+	blink_timer = 0.0
+
+# Вставляем логику рывка в _process или _physics_process
+func _process(delta):
+	if blink_timer >= 0.0:
+		blink_timer += delta
+		if blink_timer < blink_duration:
+			# Линейная интерполяция (плавное движение)
+			var blink_direction = -transform.basis.z.normalized()
+			var target_position = global_position + blink_direction * blink_distance
+			global_position = global_position.lerp(target_position, blink_timer / blink_duration)
+		else:
+			# После окончания рывка
+			blink_timer = -1.0
+
+	 
+
+
+	# Дополнительно можно добавить эффект блинка, например, с анимацией или эффектами
