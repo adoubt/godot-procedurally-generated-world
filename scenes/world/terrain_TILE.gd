@@ -142,7 +142,7 @@ func generate_terrain():
 
 func get_color_for_height(height: float) -> Color:
 	if height < WATER_LEVEL + 1.0:
-		return Color.DARK_RED#(0.15, 0.35, 0.1)  # Болотистый зеленый
+		return Color.DARK_RED #(0.15, 0.35, 0.1)  # Болотистый зеленый
 	elif height < WATER_LEVEL + 4.0:
 		return Color(0.3, 0.6, 0.2)  # Яркая трава
 	elif height < MAX_HEIGHT * 0.6:
