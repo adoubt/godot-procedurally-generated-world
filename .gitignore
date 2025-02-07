@@ -1,6 +1,7 @@
 # Godot 4+ specific ignores
 .godot/
 *.tmp
+*.import
 # Игнорировать файлы, относящиеся к ОС
 .DS_Store
 Thumbs.db
