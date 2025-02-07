@@ -1,8 +1,9 @@
-[gd_scene load_steps=9 format=3 uid="uid://dqjk33fq44wxh"]
+[gd_scene load_steps=8 format=3 uid="uid://dqjk33fq44wxh"]
 
-[ext_resource type="Script" path="res://terrain_TILE.gd" id="1_k1jks"]
-[ext_resource type="Script" path="res://CharacterBody3D.gd" id="2_2n0ek"]
+[ext_resource type="Script" path="res://scenes/world/terrain_TILE.gd" id="1_k1jks"]
+[ext_resource type="PackedScene" uid="uid://htj4en237yly" path="res://scenes/player/player.tscn" id="2_qlobo"]
 [ext_resource type="Script" path="res://skeleton.gd" id="3_5tj88"]
+[ext_resource type="Script" path="res://canvas_layer.gd" id="4_0n2ae"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_v4d2o"]
 
@@ -16,10 +17,6 @@ sky_custom_fov = 37.9
 ambient_light_source = 3
 ambient_light_color = Color(0.999026, 0.837164, 0.884479, 1)
 
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_q7a3j"]
-
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_yyxwe"]
-
 [node name="main" type="Node"]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
@@ -28,23 +25,11 @@ environment = SubResource("Environment_3prqi")
 [node name="WorldGeneration" type="Node" parent="."]
 script = ExtResource("1_k1jks")
 
-[node name="Player" type="CharacterBody3D" parent="."]
+[node name="Player" parent="." instance=ExtResource("2_qlobo")]
 unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.39172, 0)
-script = ExtResource("2_2n0ek")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
-shape = SubResource("CapsuleShape3D_q7a3j")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Player/CollisionShape3D"]
-mesh = SubResource("CapsuleMesh_yyxwe")
-
-[node name="CameraPivot" type="Node3D" parent="Player"]
-
-[node name="Camera3D" type="Camera3D" parent="Player/CameraPivot"]
-transform = Transform3D(1, 0, 0, 0, 0.937786, 0.347214, 0, -0.347214, 0.937786, 0, 2.57277, 4.24814)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 54.5006, 0)
 light_color = Color(0.775295, 0.9438, 0.933018, 1)
 light_bake_mode = 1
 shadow_enabled = true
@@ -53,3 +38,23 @@ shadow_enabled = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0635476, -0.165628, -0.0703402)
 script = ExtResource("3_5tj88")
 player_path = NodePath("../Player")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+script = ExtResource("4_0n2ae")
+
+[node name="Node2D" type="Node2D" parent="CanvasLayer"]
+
+[node name="Control" type="Control" parent="CanvasLayer/Node2D"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="TextEdit" type="TextEdit" parent="CanvasLayer/Node2D/Control"]
+layout_mode = 0
+offset_right = 712.0
+offset_bottom = 499.0
+theme_override_colors/font_color = Color(0.882813, 0.117249, 0.727307, 1)
+theme_override_font_sizes/font_size = 72
+text = "
+Жопа"
