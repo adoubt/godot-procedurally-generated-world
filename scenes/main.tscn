@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://dqjk33fq44wxh"]
+[gd_scene load_steps=9 format=3 uid="uid://dqjk33fq44wxh"]
 
 [ext_resource type="Script" path="res://scenes/world/terrain_TILE.gd" id="1_k1jks"]
 [ext_resource type="PackedScene" uid="uid://htj4en237yly" path="res://scenes/player/player.tscn" id="2_qlobo"]
@@ -15,12 +15,21 @@ background_mode = 3
 sky = SubResource("Sky_3uant")
 sky_custom_fov = 37.9
 ambient_light_source = 3
-ambient_light_color = Color(0.999026, 0.837164, 0.884479, 1)
+volumetric_fog_enabled = true
+
+[sub_resource type="FogMaterial" id="FogMaterial_2fj2b"]
+density = 0.7276
+albedo = Color(0.768555, 0.868751, 0.938824, 1)
+emission = Color(0.636759, 0.467521, 0.0977779, 1)
 
 [node name="main" type="Node"]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_3prqi")
+
+[node name="FogVolume" type="FogVolume" parent="WorldEnvironment"]
+size = Vector3(20.65, 33.04, 1.5)
+material = SubResource("FogMaterial_2fj2b")
 
 [node name="WorldGeneration" type="Node" parent="."]
 script = ExtResource("1_k1jks")

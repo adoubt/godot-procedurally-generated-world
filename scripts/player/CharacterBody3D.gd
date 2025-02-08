@@ -91,7 +91,7 @@ func _handle_movement(delta):
 		velocity.z = move_toward(velocity.z, 0, deceleration * delta)
 	
 	# Прыжок на пробел
-	if Input.is_action_just_pressed("jump") and is_on_floor():
+	if Input.is_action_just_pressed("jump") :
 		velocity.y = jump_velocity
 
 # Функция для быстрого блинка

@@ -1,11 +1,11 @@
 extends Node
 
-const MAP_SIZE = 256  # Размер сетки (количество полигонов)
-const TILE_SIZE = 0.5  # Размер одного квадрата (чем больше, тем менее детализирован рельеф)
-const HEIGHT_MULTIPLIER = 5.0  # Максимальная высота гор
-const MIN_HEIGHT = 1.5  # Минимальная высота рельефа
-const MAX_HEIGHT = 7.0  # Максимальная высота рельефа
-const WATER_LEVEL = 3.5   # Уровень воды
+const MAP_SIZE = 128 # Размер сетки (количество полигонов)
+const TILE_SIZE = 2  # Размер одного квадрата (чем больше, тем менее детализирован рельеф)
+const HEIGHT_MULTIPLIER = 15.0  # Максимальная высота гор
+const MIN_HEIGHT = -10  # Минимальная высота рельефа
+const MAX_HEIGHT = 20.0  # Максимальная высота рельефа
+const WATER_LEVEL = 2.8   # Уровень воды
 
 var noise = FastNoiseLite.new()  # Генератор шума
 var island_noise = FastNoiseLite.new()  # Шум для островков
@@ -19,10 +19,10 @@ func _ready():
 	
 	# Настройки шума рельефа (улучшенное формирование суши и воды)
 	noise.noise_type = FastNoiseLite.TYPE_PERLIN
-	noise.frequency = 0.002  # Более мягкие переходы
+	noise.frequency = 0.006  # Более мягкие переходы
 	noise.fractal_octaves = 4
 	noise.fractal_lacunarity = 1.5 
-	noise.fractal_gain = 7 #чем ниже - тем более плоская мапа
+	noise.fractal_gain = 26 #чем ниже - тем более плоская мапа
 	noise.seed = randi()
 	
 	# Настройки шума для островков
@@ -42,11 +42,11 @@ func _ready():
 	
 	
 func get_height(x, z):
-	var base_noise = noise.get_noise_2d(x, z) * 5.0 + 5.0  # Усиливаем контраст
+	var base_noise = noise.get_noise_2d(x, z) * 5.0 + 3.0  # Усиливаем контраст
 	var hole_factor = island_noise.get_noise_2d(x, z)
 
 	if hole_factor < -0.25:  
-		base_noise -= abs(hole_factor) * 12.0  # Ямы становятся менее резкими
+		base_noise -= abs(hole_factor) * 4.0  # Ямы становятся менее резкими
 
 	return clamp(base_noise, MIN_HEIGHT, MAX_HEIGHT)
 
